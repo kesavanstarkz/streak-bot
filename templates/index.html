@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Image Processing Server</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        padding: 20px;
+      }
+
+      .container {
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        padding: 40px;
+        max-width: 600px;
+        width: 100%;
+      }
+
+      h1 {
+        color: #333;
+        margin-bottom: 10px;
+        text-align: center;
+        font-size: 28px;
+      }
+
+      .subtitle {
+        color: #666;
+        text-align: center;
+        margin-bottom: 30px;
+        font-size: 14px;
+      }
+
+      .upload-area {
+        border: 2px dashed #667eea;
+        border-radius: 10px;
+        padding: 40px;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        background: #f8f9ff;
+        margin-bottom: 20px;
+      }
+
+      .upload-area:hover {
+        border-color: #764ba2;
+        background: #f0f2ff;
+      }
+
+      .upload-area.dragover {
+        border-color: #764ba2;
+        background: #e8ebff;
+        transform: scale(1.02);
+      }
+
+      .upload-icon {
+        font-size: 48px;
+        margin-bottom: 15px;
+      }
+
+      .upload-text {
+        color: #667eea;
+        font-weight: 600;
+        margin-bottom: 5px;
+      }
+
+      .upload-subtext {
+        color: #999;
+        font-size: 12px;
+      }
+
+      #fileInput {
+        display: none;
+      }
+
+      .button-group {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 20px;
+      }
+
+      button {
+        flex: 1;
+        padding: 12px 20px;
+        border: none;
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+      }
+
+      .btn-upload {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+      }
+
+      .btn-upload:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
+      }
+
+      .btn-default {
+        background: #f0f0f0;
+        color: #333;
+        border: 1px solid #ddd;
+      }
+
+      .btn-default:hover {
+        background: #e8e8e8;
+        transform: translateY(-2px);
+      }
+
+      .results {
+        background: #f8f9fa;
+        border-radius: 10px;
+        padding: 20px;
+        margin-top: 20px;
+        display: none;
+      }
+
+      .results.show {
+        display: block;
+      }
+
+      .result-item {
+        margin-bottom: 20px;
+        padding-bottom: 15px;
+        border-bottom: 1px solid #ddd;
+      }
+
+      .result-item:last-child {
+        border-bottom: none;
+        margin-bottom: 0;
+        padding-bottom: 0;
+      }
+
+      .result-label {
+        color: #667eea;
+        font-weight: 600;
+        margin-bottom: 8px;
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+
+      .result-content {
+        background: white;
+        padding: 12px;
+        border-radius: 6px;
+        color: #333;
+        word-break: break-word;
+        font-size: 14px;
+        line-height: 1.5;
+      }
+
+      .loading {
+        display: none;
+        text-align: center;
+        padding: 20px;
+      }
+
+      .loading.show {
+        display: block;
+      }
+
+      .spinner {
+        border: 3px solid #f3f3f3;
+        border-top: 3px solid #667eea;
+        border-radius: 50%;
+        width: 40px;
+        height: 40px;
+        animation: spin 1s linear infinite;
+        margin: 0 auto 10px;
+      }
+
+      @keyframes spin {
+        0% {
+          transform: rotate(0deg);
+        }
+        100% {
+          transform: rotate(360deg);
+        }
+      }
+
+      .error {
+        background: #fee;
+        color: #c33;
+        padding: 12px;
+        border-radius: 6px;
+        margin-top: 20px;
+        display: none;
+        border: 1px solid #fcc;
+      }
+
+      .error.show {
+        display: block;
+      }
+
+      .success-message {
+        background: #efe;
+        color: #3c3;
+        padding: 12px;
+        border-radius: 6px;
+        margin-top: 20px;
+        display: none;
+        border: 1px solid #cfc;
+      }
+
+      .success-message.show {
+        display: block;
+      }
+
+      .file-name {
+        color: #666;
+        font-size: 12px;
+        margin-top: 10px;
+      }
+
+      @media (max-width: 600px) {
+        .container {
+          padding: 25px;
+        }
+
+        h1 {
+          font-size: 22px;
+        }
+
+        .upload-area {
+          padding: 30px 20px;
+        }
+
+        .button-group {
+          flex-direction: column;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>🖼️ Image Processing</h1>
+      <p class="subtitle">
+        Upload an image to extract streak data with Azure AI
+      </p>
+
+      <div class="upload-area" id="uploadArea">
+        <div class="upload-icon">📁</div>
+        <div class="upload-text">Click to upload or drag and drop</div>
+        <div class="upload-subtext">
+          PNG, JPG, JPEG, GIF, WebP, JFIF, BMP, or TIFF (max 16MB)
+        </div>
+      </div>
+
+      <div class="file-name" id="fileName"></div>
+
+      <div class="button-group">
+        <button
+          class="btn-upload"
+          onclick="document.getElementById('fileInput').click()"
+        >
+          Upload Image
+        </button>
+        <button class="btn-default" onclick="processDefault()">
+          Use Default Image
+        </button>
+      </div>
+
+      <input type="file" id="fileInput" accept="image/*" />
+
+      <div class="loading" id="loading">
+        <div class="spinner"></div>
+        <p>Processing image...</p>
+      </div>
+
+      <div class="error" id="error"></div>
+      <div class="success-message" id="successMessage"></div>
+
+      <div class="results" id="results">
+        <div class="result-item">
+          <div class="result-label">🤖 Azure GPT-4o Result</div>
+          <div class="result-content" id="azureResult"></div>
+        </div>
+        <div class="result-item">
+          <div class="result-label">📝 OCR Extracted Text</div>
+          <div class="result-content" id="ocrResult"></div>
+        </div>
+        <div class="result-item">
+          <div class="result-label">📊 Google Sheets</div>
+          <div class="result-content" id="sheetsResult"></div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const uploadArea = document.getElementById("uploadArea");
+      const fileInput = document.getElementById("fileInput");
+      const loading = document.getElementById("loading");
+      const results = document.getElementById("results");
+      const error = document.getElementById("error");
+      const successMessage = document.getElementById("successMessage");
+      const fileName = document.getElementById("fileName");
+
+      // Upload area click
+      uploadArea.addEventListener("click", () => fileInput.click());
+
+      // Drag and drop
+      uploadArea.addEventListener("dragover", (e) => {
+        e.preventDefault();
+        uploadArea.classList.add("dragover");
+      });
+
+      uploadArea.addEventListener("dragleave", () => {
+        uploadArea.classList.remove("dragover");
+      });
+
+      uploadArea.addEventListener("drop", (e) => {
+        e.preventDefault();
+        uploadArea.classList.remove("dragover");
+        const files = e.dataTransfer.files;
+        if (files.length > 0) {
+          handleFile(files[0]);
+        }
+      });
+
+      // File input change
+      fileInput.addEventListener("change", (e) => {
+        if (e.target.files.length > 0) {
+          handleFile(e.target.files[0]);
+        }
+      });
+
+      function handleFile(file) {
+        const validTypes = [
+          "image/png",
+          "image/jpeg",
+          "image/gif",
+          "image/webp",
+        ];
+
+        if (!validTypes.includes(file.type)) {
+          showError("Invalid file type. Please upload an image file.");
+          return;
+        }
+
+        if (file.size > 16 * 1024 * 1024) {
+          showError("File is too large. Maximum size is 16MB.");
+          return;
+        }
+
+        fileName.textContent = `📄 ${file.name}`;
+        uploadFile(file);
+      }
+
+      function uploadFile(file) {
+        const formData = new FormData();
+        formData.append("file", file);
+
+        showLoading(true);
+        hideError();
+
+        fetch("/upload", {
+          method: "POST",
+          body: formData,
+        })
+          .then((response) => response.json())
+          .then((data) => {
+            if (data.success) {
+              displayResults(data);
+              showSuccess("Image processed and saved to Google Sheets!");
+            } else {
+              showError(data.error || "Upload failed");
+            }
+            showLoading(false);
+          })
+          .catch((err) => {
+            showError("Error: " + err.message);
+            showLoading(false);
+          });
+      }
+
+      function processDefault() {
+        showLoading(true);
+        hideError();
+        fileName.textContent = "📄 Default image (with_streaks_cropped.jpg)";
+
+        fetch("/process-default")
+          .then((response) => response.json())
+          .then((data) => {
+            displayResults(data);
+            showSuccess("Default image processed and saved to Google Sheets!");
+            showLoading(false);
+          })
+          .catch((err) => {
+            showError("Error: " + err.message);
+            showLoading(false);
+          });
+      }
+
+      function displayResults(data) {
+        document.getElementById("azureResult").textContent =
+          data.azure_result || "No result";
+        document.getElementById("ocrResult").textContent =
+          data.ocr_result || "No result";
+        document.getElementById("sheetsResult").textContent =
+          data.sheets_message || "Failed to save";
+
+        results.classList.add("show");
+      }
+
+      function showLoading(show) {
+        if (show) {
+          loading.classList.add("show");
+          results.classList.remove("show");
+        } else {
+          loading.classList.remove("show");
+        }
+      }
+
+      function showError(message) {
+        error.textContent = message;
+        error.classList.add("show");
+      }
+
+      function hideError() {
+        error.classList.remove("show");
+      }
+
+      function showSuccess(message) {
+        successMessage.textContent = message;
+        successMessage.classList.add("show");
+        setTimeout(() => successMessage.classList.remove("show"), 3000);
+      }
+    </script>
+  </body>
+</html>

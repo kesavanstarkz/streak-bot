@@ -1,0 +1,4 @@
+.venv
+credientials/cred.json
+.env
+usingAzure.py
