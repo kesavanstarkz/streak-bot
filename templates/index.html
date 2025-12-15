@@ -1,448 +1,315 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Image Processing Server</title>
-    <style>
-      * {
-        margin: 0;
-        padding: 0;
-        box-sizing: border-box;
-      }
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Streak Image Processor</title>
 
-      body {
-        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        min-height: 100vh;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        padding: 20px;
-      }
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: "Inter", "Segoe UI", sans-serif;
+    }
 
-      .container {
-        background: white;
-        border-radius: 15px;
-        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-        padding: 40px;
-        max-width: 600px;
-        width: 100%;
-      }
+    body {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      padding: 20px;
+    }
 
-      h1 {
-        color: #333;
-        margin-bottom: 10px;
-        text-align: center;
-        font-size: 28px;
-      }
+    .card {
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(10px);
+      border-radius: 18px;
+      width: 100%;
+      max-width: 520px;
+      padding: 32px;
+      box-shadow: 0 25px 60px rgba(0, 0, 0, 0.25);
+      animation: fadeIn 0.6s ease;
+    }
 
-      .subtitle {
-        color: #666;
-        text-align: center;
-        margin-bottom: 30px;
-        font-size: 14px;
-      }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(15px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
 
-      .upload-area {
-        border: 2px dashed #667eea;
-        border-radius: 10px;
-        padding: 40px;
-        text-align: center;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        background: #f8f9ff;
-        margin-bottom: 20px;
-      }
+    h1 {
+      text-align: center;
+      font-size: 26px;
+      margin-bottom: 8px;
+      color: #333;
+    }
 
-      .upload-area:hover {
-        border-color: #764ba2;
-        background: #f0f2ff;
-      }
+    .subtitle {
+      text-align: center;
+      font-size: 14px;
+      color: #666;
+      margin-bottom: 25px;
+    }
 
-      .upload-area.dragover {
-        border-color: #764ba2;
-        background: #e8ebff;
-        transform: scale(1.02);
-      }
+    .drop-zone {
+      border: 2px dashed #667eea;
+      border-radius: 14px;
+      padding: 35px 20px;
+      text-align: center;
+      cursor: pointer;
+      transition: 0.3s ease;
+      background: #f7f9ff;
+    }
 
-      .upload-icon {
-        font-size: 48px;
-        margin-bottom: 15px;
-      }
+    .drop-zone.dragover {
+      background: #eef1ff;
+      transform: scale(1.02);
+    }
 
-      .upload-text {
-        color: #667eea;
-        font-weight: 600;
-        margin-bottom: 5px;
-      }
+    .drop-zone span {
+      font-size: 42px;
+      display: block;
+      margin-bottom: 10px;
+    }
 
-      .upload-subtext {
-        color: #999;
-        font-size: 12px;
-      }
+    .drop-zone p {
+      color: #667eea;
+      font-weight: 600;
+    }
 
-      #fileInput {
-        display: none;
-      }
+    .hint {
+      font-size: 12px;
+      color: #888;
+      margin-top: 6px;
+    }
 
-      .button-group {
-        display: flex;
-        gap: 10px;
-        margin-bottom: 20px;
-      }
+    input[type="file"] {
+      display: none;
+    }
 
-      button {
-        flex: 1;
-        padding: 12px 20px;
-        border: none;
-        border-radius: 8px;
-        font-size: 14px;
-        font-weight: 600;
-        cursor: pointer;
-        transition: all 0.3s ease;
-      }
+    .preview {
+      margin-top: 15px;
+      display: none;
+      text-align: center;
+    }
 
-      .btn-upload {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
-      }
+    .preview img {
+      max-width: 100%;
+      border-radius: 10px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+    }
 
-      .btn-upload:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
-      }
+    button {
+      width: 100%;
+      margin-top: 20px;
+      padding: 14px;
+      border: none;
+      border-radius: 10px;
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      color: #fff;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
 
-      .btn-default {
-        background: #f0f0f0;
-        color: #333;
-        border: 1px solid #ddd;
-      }
+    button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 30px rgba(102, 126, 234, 0.45);
+    }
 
-      .btn-default:hover {
-        background: #e8e8e8;
-        transform: translateY(-2px);
-      }
+    .loading {
+      display: none;
+      text-align: center;
+      margin-top: 20px;
+      color: #555;
+    }
 
-      .results {
-        background: #f8f9fa;
-        border-radius: 10px;
-        padding: 20px;
-        margin-top: 20px;
-        display: none;
-      }
+    .spinner {
+      width: 38px;
+      height: 38px;
+      border: 4px solid #eee;
+      border-top: 4px solid #667eea;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin: 0 auto 10px;
+    }
 
-      .results.show {
-        display: block;
-      }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
 
-      .result-item {
-        margin-bottom: 20px;
-        padding-bottom: 15px;
-        border-bottom: 1px solid #ddd;
-      }
+    .message {
+      margin-top: 18px;
+      padding: 12px;
+      border-radius: 8px;
+      font-size: 14px;
+      display: none;
+      text-align: center;
+    }
 
-      .result-item:last-child {
-        border-bottom: none;
-        margin-bottom: 0;
-        padding-bottom: 0;
-      }
+    .success {
+      background: #e9f9ef;
+      color: #1e7e34;
+      border: 1px solid #c6f1d8;
+    }
 
-      .result-label {
-        color: #667eea;
-        font-weight: 600;
-        margin-bottom: 8px;
-        font-size: 12px;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-      }
+    .error {
+      background: #fdeaea;
+      color: #b02a37;
+      border: 1px solid #f5c2c7;
+    }
 
-      .result-content {
-        background: white;
-        padding: 12px;
-        border-radius: 6px;
-        color: #333;
-        word-break: break-word;
-        font-size: 14px;
-        line-height: 1.5;
-      }
+    .json-output {
+      display: none;
+      margin-top: 15px;
+      background: #f8f9fa;
+      border-radius: 10px;
+      padding: 12px;
+      font-size: 13px;
+      max-height: 200px;
+      overflow-y: auto;
+    }
 
-      .loading {
-        display: none;
-        text-align: center;
-        padding: 20px;
-      }
+    pre {
+      white-space: pre-wrap;
+    }
+  </style>
+</head>
 
-      .loading.show {
-        display: block;
-      }
+<body>
+  <div class="card">
+    <h1>📸 Streak Processor</h1>
+    <p class="subtitle">Upload your Mimo / Elevate streak screenshot</p>
 
-      .spinner {
-        border: 3px solid #f3f3f3;
-        border-top: 3px solid #667eea;
-        border-radius: 50%;
-        width: 40px;
-        height: 40px;
-        animation: spin 1s linear infinite;
-        margin: 0 auto 10px;
-      }
-
-      @keyframes spin {
-        0% {
-          transform: rotate(0deg);
-        }
-        100% {
-          transform: rotate(360deg);
-        }
-      }
-
-      .error {
-        background: #fee;
-        color: #c33;
-        padding: 12px;
-        border-radius: 6px;
-        margin-top: 20px;
-        display: none;
-        border: 1px solid #fcc;
-      }
-
-      .error.show {
-        display: block;
-      }
-
-      .success-message {
-        background: #efe;
-        color: #3c3;
-        padding: 12px;
-        border-radius: 6px;
-        margin-top: 20px;
-        display: none;
-        border: 1px solid #cfc;
-      }
-
-      .success-message.show {
-        display: block;
-      }
-
-      .file-name {
-        color: #666;
-        font-size: 12px;
-        margin-top: 10px;
-      }
-
-      @media (max-width: 600px) {
-        .container {
-          padding: 25px;
-        }
-
-        h1 {
-          font-size: 22px;
-        }
-
-        .upload-area {
-          padding: 30px 20px;
-        }
-
-        .button-group {
-          flex-direction: column;
-        }
-      }
-    </style>
-  </head>
-  <body>
-    <div class="container">
-      <h1>🖼️ Image Processing</h1>
-      <p class="subtitle">
-        Upload an image to extract streak data with Azure AI
-      </p>
-
-      <div class="upload-area" id="uploadArea">
-        <div class="upload-icon">📁</div>
-        <div class="upload-text">Click to upload or drag and drop</div>
-        <div class="upload-subtext">
-          PNG, JPG, JPEG, GIF, WebP, JFIF, BMP, or TIFF (max 16MB)
-        </div>
-      </div>
-
-      <div class="file-name" id="fileName"></div>
-
-      <div class="button-group">
-        <button
-          class="btn-upload"
-          onclick="document.getElementById('fileInput').click()"
-        >
-          Upload Image
-        </button>
-        <button class="btn-default" onclick="processDefault()">
-          Use Default Image
-        </button>
-      </div>
-
-      <input type="file" id="fileInput" accept="image/*" />
-
-      <div class="loading" id="loading">
-        <div class="spinner"></div>
-        <p>Processing image...</p>
-      </div>
-
-      <div class="error" id="error"></div>
-      <div class="success-message" id="successMessage"></div>
-
-      <div class="results" id="results">
-        <div class="result-item">
-          <div class="result-label">🤖 Azure GPT-4o Result</div>
-          <div class="result-content" id="azureResult"></div>
-        </div>
-        <div class="result-item">
-          <div class="result-label">📝 OCR Extracted Text</div>
-          <div class="result-content" id="ocrResult"></div>
-        </div>
-        <div class="result-item">
-          <div class="result-label">📊 Google Sheets</div>
-          <div class="result-content" id="sheetsResult"></div>
-        </div>
-      </div>
+    <div class="drop-zone" id="dropZone">
+      <span>⬆️</span>
+      <p>Click or drag & drop image</p>
+      <div class="hint">PNG, JPG, JPEG, JFIF, BMP, TIFF (max 16MB)</div>
     </div>
 
-    <script>
-      const uploadArea = document.getElementById("uploadArea");
-      const fileInput = document.getElementById("fileInput");
-      const loading = document.getElementById("loading");
-      const results = document.getElementById("results");
-      const error = document.getElementById("error");
-      const successMessage = document.getElementById("successMessage");
-      const fileName = document.getElementById("fileName");
+    <input type="file" id="fileInput" accept="image/*" />
 
-      // Upload area click
-      uploadArea.addEventListener("click", () => fileInput.click());
+    <div class="preview" id="preview">
+      <img id="previewImg" />
+    </div>
 
-      // Drag and drop
-      uploadArea.addEventListener("dragover", (e) => {
-        e.preventDefault();
-        uploadArea.classList.add("dragover");
-      });
+    <button id="uploadBtn">Upload & Process</button>
 
-      uploadArea.addEventListener("dragleave", () => {
-        uploadArea.classList.remove("dragover");
-      });
+    <div class="loading" id="loading">
+      <div class="spinner"></div>
+      Processing image…
+    </div>
 
-      uploadArea.addEventListener("drop", (e) => {
-        e.preventDefault();
-        uploadArea.classList.remove("dragover");
-        const files = e.dataTransfer.files;
-        if (files.length > 0) {
-          handleFile(files[0]);
-        }
-      });
+    <div class="message success" id="success"></div>
+    <div class="message error" id="error"></div>
 
-      // File input change
-      fileInput.addEventListener("change", (e) => {
-        if (e.target.files.length > 0) {
-          handleFile(e.target.files[0]);
-        }
-      });
+    <div class="json-output" id="jsonOutput">
+      <pre id="jsonData"></pre>
+    </div>
+  </div>
 
-      function handleFile(file) {
-        const validTypes = [
-          "image/png",
-          "image/jpeg",
-          "image/gif",
-          "image/webp",
-        ];
+  <script>
+    const dropZone = document.getElementById("dropZone");
+    const fileInput = document.getElementById("fileInput");
+    const uploadBtn = document.getElementById("uploadBtn");
+    const preview = document.getElementById("preview");
+    const previewImg = document.getElementById("previewImg");
+    const loading = document.getElementById("loading");
+    const success = document.getElementById("success");
+    const error = document.getElementById("error");
+    const jsonOutput = document.getElementById("jsonOutput");
+    const jsonData = document.getElementById("jsonData");
 
-        if (!validTypes.includes(file.type)) {
-          showError("Invalid file type. Please upload an image file.");
-          return;
-        }
+    let selectedFile = null;
 
-        if (file.size > 16 * 1024 * 1024) {
-          showError("File is too large. Maximum size is 16MB.");
-          return;
-        }
+    const allowedTypes = [
+      "image/png",
+      "image/jpeg",
+      "image/gif",
+      "image/webp",
+      "image/bmp",
+      "image/tiff",
+    ];
 
-        fileName.textContent = `📄 ${file.name}`;
-        uploadFile(file);
+    dropZone.onclick = () => fileInput.click();
+
+    dropZone.ondragover = e => {
+      e.preventDefault();
+      dropZone.classList.add("dragover");
+    };
+
+    dropZone.ondragleave = () => dropZone.classList.remove("dragover");
+
+    dropZone.ondrop = e => {
+      e.preventDefault();
+      dropZone.classList.remove("dragover");
+      handleFile(e.dataTransfer.files[0]);
+    };
+
+    fileInput.onchange = () => handleFile(fileInput.files[0]);
+
+    function handleFile(file) {
+      resetUI();
+
+      if (!allowedTypes.includes(file.type)) {
+        showError("Unsupported image format");
+        return;
       }
 
-      function uploadFile(file) {
-        const formData = new FormData();
-        formData.append("file", file);
+      if (file.size > 16 * 1024 * 1024) {
+        showError("File too large (max 16MB)");
+        return;
+      }
 
-        showLoading(true);
-        hideError();
+      selectedFile = file;
+      preview.style.display = "block";
+      previewImg.src = URL.createObjectURL(file);
+    }
 
-        fetch("/upload", {
-          method: "POST",
-          body: formData,
+    uploadBtn.onclick = () => {
+      if (!selectedFile) {
+        showError("Please select an image first");
+        return;
+      }
+      uploadFile(selectedFile);
+    };
+
+    function uploadFile(file) {
+      const formData = new FormData();
+      formData.append("file", file);
+
+      loading.style.display = "block";
+
+      fetch("/upload", { method: "POST", body: formData })
+        .then(res => res.json())
+        .then(data => {
+          loading.style.display = "none";
+          success.textContent = "✅ Image processed & saved successfully! Reloading…";
+          success.style.display = "block";
+          jsonOutput.style.display = "block";
+          jsonData.textContent = JSON.stringify(data, null, 2);
+
+          // 🔁 AUTO RELOAD AFTER SUCCESS
+          setTimeout(() => location.reload(), 3000);
         })
-          .then((response) => response.json())
-          .then((data) => {
-            if (data.success) {
-              displayResults(data);
-              showSuccess("Image processed and saved to Google Sheets!");
-            } else {
-              showError(data.error || "Upload failed");
-            }
-            showLoading(false);
-          })
-          .catch((err) => {
-            showError("Error: " + err.message);
-            showLoading(false);
-          });
-      }
+        .catch(err => {
+          loading.style.display = "none";
+          showError(err.message);
+        });
+    }
 
-      function processDefault() {
-        showLoading(true);
-        hideError();
-        fileName.textContent = "📄 Default image (with_streaks_cropped.jpg)";
+    function showError(msg) {
+      error.textContent = msg;
+      error.style.display = "block";
+    }
 
-        fetch("/process-default")
-          .then((response) => response.json())
-          .then((data) => {
-            displayResults(data);
-            showSuccess("Default image processed and saved to Google Sheets!");
-            showLoading(false);
-          })
-          .catch((err) => {
-            showError("Error: " + err.message);
-            showLoading(false);
-          });
-      }
-
-      function displayResults(data) {
-        document.getElementById("azureResult").textContent =
-          data.azure_result || "No result";
-        document.getElementById("ocrResult").textContent =
-          data.ocr_result || "No result";
-        document.getElementById("sheetsResult").textContent =
-          data.sheets_message || "Failed to save";
-
-        results.classList.add("show");
-      }
-
-      function showLoading(show) {
-        if (show) {
-          loading.classList.add("show");
-          results.classList.remove("show");
-        } else {
-          loading.classList.remove("show");
-        }
-      }
-
-      function showError(message) {
-        error.textContent = message;
-        error.classList.add("show");
-      }
-
-      function hideError() {
-        error.classList.remove("show");
-      }
-
-      function showSuccess(message) {
-        successMessage.textContent = message;
-        successMessage.classList.add("show");
-        setTimeout(() => successMessage.classList.remove("show"), 3000);
-      }
-    </script>
-  </body>
+    function resetUI() {
+      error.style.display = "none";
+      success.style.display = "none";
+      jsonOutput.style.display = "none";
+    }
+  </script>
+</body>
 </html>
